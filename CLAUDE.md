@@ -71,9 +71,8 @@ This is a fork of **JFD's Utilities — AI Observer Interface (v11)**, a Civ5 mo
 
 Civ5 does not hot-reload mods mid-game. To test Lua changes:
 1. Modify the `.lua` file.
-2. In-game, open the console (` key if enabled) and run `LuaEvents.ReloadUI()`, or simply restart the game and reload your save.
-3. Enable the Lua debug console via `Config.ini`: set `DebugPanel = 1` in `My Games\Sid Meier's Civilization 5\`.
-4. Lua errors appear in `Lua.log` in the Civ5 user data directory.
+2. Run a grammar checker.
+3. Ask the user to test the game.
 
 ---
 
