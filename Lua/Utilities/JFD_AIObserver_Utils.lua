@@ -265,7 +265,7 @@ function Player_GetFakeGovernment(player)
 	local strFakeGovFont
 	
 	local playerPolicyBranchID = player:GetDominantPolicyBranchForTitle()
-	local playerIdeology = Player_GetIdeology(player)
+	local playerIdeologyID = Player_GetIdeology(player)
 	
 	local flavourGold = player:GetFlavorValue("FLAVOR_GOLD")
 	local flavourCulture = player:GetFlavorValue("FLAVOR_CULTURE")
@@ -353,7 +353,7 @@ function Player_GetMainReligion(player)
 			end
 		end
 	end
-	if mainReligionID == -1 and (not ignorePantheon) then
+	if mainReligionID == -1 then
 		mainReligionID = 0
 	end
 	return mainReligionID

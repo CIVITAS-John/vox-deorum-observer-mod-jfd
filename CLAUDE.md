@@ -71,7 +71,7 @@ This is a fork of **JFD's Utilities — AI Observer Interface (v11)**, a Civ5 mo
 
 Civ5 does not hot-reload mods mid-game. To test Lua changes:
 1. Modify the `.lua` file.
-2. Run a grammar checker.
+2. Run `./luacheck.exe Lua/**/*.lua` from the repo root and fix any warnings.
 3. Ask the user to test the game.
 
 ---

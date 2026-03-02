@@ -93,7 +93,7 @@ function Player.GetValueForRankForOverlayMap(player, overlayMapID)
 	local playerID = player:GetID()
 	local overlayMap = GameInfo.JFD_OverlayMaps[overlayMapID]
 	local overlayMapType = overlayMap.Type
-	local overlayLegendRankings = GameInfo.JFD_OverlayMap_Rankings("OverlayMapType = '" .. overlayMapType .. "'")()
+	local overlayMapLegend = GameInfo.JFD_OverlayMap_Rankings("OverlayMapType = '" .. overlayMapType .. "'")()
 	local numVal = 0
 	if player:IsAlive() then	
 		local iTeam = player:GetTeam()
@@ -290,14 +290,14 @@ function GetOverlayMapLegend(overlayMapID, overlayMapFilterID, overlayMapFilterP
 	--PLAYERS: RELIGION
 	-----------------------------------
 	elseif overlayMap.IsPlayerReligion then
-		local iReligion = player:GetReligionCreatedByPlayer()
+		local iReligion = pPlayer:GetReligionCreatedByPlayer()
 		if iReligion <= 0 then
 			if Player.GetMajorityReligion then
-				return player:GetMajorityReligion()
+				return pPlayer:GetMajorityReligion()
 			else
 				for religion in GameInfo.Religions("ID > 0") do
 					local religionID = religion.ID
-					for city in player:Cities() do
+					for city in pPlayer:Cities() do
 						if city:GetNumFollowers(religionID) > 0 then
 							if city:HasReligionInMostCities(religionID) then
 								return religionID
