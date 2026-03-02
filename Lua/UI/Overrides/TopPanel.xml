@@ -5,64 +5,70 @@
 	<!--   International Popup -->
 	<!--=======================================================================================================================-->
 
-	<Instance Offset="0,0" Name="PlayerEntryInstance" Size="420,90" >
-		<Box Size="926,90" Anchor="L,T" Color="Black.0" ID="PlayerEntryBox">
-			<Box  Size="936,82" Anchor="C,C" Offset="10,0" ID="PlayerEntryAnimGrid" />
-			<AlphaAnim ID="PlayerEntryAnim" Anchor="L,T" Offset="5,0" Size="956,85" TextureOffset="0.0"  Pause="0" Cycle="Bounce" Speed="0" AlphaStart=".75" AlphaEnd=".75" Hidden="0">
-				<Grid  Size="956,85" Anchor="C,C" Offset="0,0" Style="GridGlass16" ID="PlayerEntryAnimGrid2" />
-				<Grid  Size="956,85" Anchor="C,C" Offset="0,0" Style="Grid9Gold8" ID="PlayerEntryAnimGridGA" />
-				<Grid  Size="956,85" Anchor="C,C" Offset="0,0" Style="Grid9Red8" ID="PlayerEntryAnimGridDA" />
-				<Grid  Size="956,85" Anchor="C,C" Offset="0,0" Style="Grid9Science8" ID="PlayerEntryAnimGridNA" />
+	<Instance Offset="0,0" Name="PlayerEntryInstance" Size="420,110" >
+		<Box Size="926,110" Anchor="L,T" Color="Black.0" ID="PlayerEntryBox">
+			<Box Size="936,102" Anchor="C,C" Offset="10,0" ID="PlayerEntryAnimGrid" />
+			<AlphaAnim ID="PlayerEntryAnim" Anchor="L,T" Offset="5,0" Size="956,105" TextureOffset="0.0" Pause="0" Cycle="Bounce" Speed="0" AlphaStart=".75" AlphaEnd=".75" Hidden="0">
+				<Grid Size="956,105" Anchor="C,C" Offset="0,0" Style="GridGlass16" ID="PlayerEntryAnimGrid2" />
+				<Grid Size="956,105" Anchor="C,C" Offset="0,0" Style="Grid9Gold8" ID="PlayerEntryAnimGridGA" />
+				<Grid Size="956,105" Anchor="C,C" Offset="0,0" Style="Grid9Red8" ID="PlayerEntryAnimGridDA" />
+				<Grid Size="956,105" Anchor="C,C" Offset="0,0" Style="Grid9Science8" ID="PlayerEntryAnimGridNA" />
 			</AlphaAnim>
 
 			<!-- Leader Portrait -->
-			<Image Anchor="L,C" Size="64,64" Offset="4,0"  Texture="Assets/UI/Art/Icons/IconFrame64.dds"  >
-				<Image Anchor="L,C" Offset="0,0" Size="64,64"   Texture="Assets/UI/Art/Icons/LeaderPortraits512.dds"  ID="Portrait"/>
+			<Image Anchor="L,C" Size="64,64" Offset="4,0" Texture="Assets/UI/Art/Icons/IconFrame64.dds" >
+				<Image Anchor="L,C" Offset="0,0" Size="64,64" Texture="Assets/UI/Art/Icons/LeaderPortraits512.dds" ID="Portrait"/>
 			</Image>
 			<!-- Civ Icon -->
 			<Box Color="255,255,255,0" Anchor="L,C" Offset="64,0" Size="32.32">
 				<Image ID="CivIconBG" Size="32.32" Anchor="C,C" Offset="0,0" TextureOffset="32,0" Texture="CivIconBGSizes.dds" />
 				<Image ID="CivIconShadow" Size="24.24" Anchor="C,C" Offset="1,1" Texture="CivSymbolAtlas16.dds" Color="Black.128"/>
-				<Image ID="Icon" Size="24.24" Offset="0,0"  Anchor="C,C" Texture="CivSymbolsColor256.dds" />
-				<Label Anchor="L,C" Offset="0,10" Font="TwCenMT14" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" String="[ICON_GOLDEN_AGE]" ID="AgeIcon"/>
+				<Image ID="Icon" Size="24.24" Offset="0,0" Anchor="C,C" Texture="CivSymbolsColor256.dds" />
 			</Box>
-			<Stack Anchor="L,C" Offset="98,0" Padding="12" StackGrowth="Bottom" ID="RightInfoStack" Hidden="0">
-				<Image Anchor="L,C" Offset="-62,0" Texture="bar900x2.dds" Size="900.1" Hidden="0"/>
-				<Label Anchor="L,C" Offset="-5,-5" Font="TwCenMT20" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" String="Player Name" ID="PlayerNameText"/>
-				<Label Anchor="L,C" Offset="1,2" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" String="Player Name" ID="PlayerCivNameText"/>
-				<Label Anchor="L,C" Offset="1,0" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" String="Player Name" ID="PlayerLeaderNameText"/>
-				<Label Anchor="R,L" Offset="-20,10" Font="TwCenMT14" ID="CyclePower" String="" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
-				<Image Anchor="L,C" Offset="-62,-2" Texture="bar900x2.dds" Size="900.1" Hidden="0"/>
+
+			<!-- Row 1: Header — CIV NAME (model) -->
+			<Label Anchor="L,T" Offset="98,8" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" TruncateWidth="700" String="" ID="VD_HeaderText"/>
+			<!-- Row 1 right: Victory icon + label -->
+			<Label Anchor="R,T" Offset="-10,10" Font="TwCenMT14" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" String="" ID="VD_VictoryText"/>
+
+			<!-- Row 2: Stats bar -->
+			<Stack Anchor="L,T" Offset="98,32" Padding="6" StackGrowth="Right" ID="VD_StatsStack">
+				<!--Cities-->
+				<Image Anchor="L,C" Offset="0,0" Size="26.20" >
+					<Label Anchor="L,C" Offset="2,-2" Font="TwCenMT16" ID="VD_CitiesIcon" String="[ICON_CITY]" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
+				</Image>
+				<TextButton Offset="0,0" Anchor="C,C" String="?" Font="TwCenMT14" NormalState="Beige_Black" MouseOver="White_Black" ButtonDown="Beige_Black_Alpha" ID="VD_CitiesInfo" />
+				<!--Population-->
+				<Image Anchor="L,C" Offset="0,0" Size="26.20" >
+					<Label Anchor="L,C" Offset="2,-2" Font="TwCenMT16" ID="VD_PopIcon" String="[ICON_CITIZEN]" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
+				</Image>
+				<TextButton Offset="0,0" Anchor="C,C" String="?" Font="TwCenMT14" NormalState="Beige_Black" MouseOver="White_Black" ButtonDown="Beige_Black_Alpha" ID="VD_PopInfo" />
+				<!--Military-->
+				<Image Anchor="L,C" Offset="0,0" Size="26.20" >
+					<Label Anchor="L,C" Offset="2,-2" Font="TwCenMT16" ID="VD_MilIcon" String="[ICON_STRENGTH]" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
+				</Image>
+				<TextButton Offset="0,0" Anchor="C,C" String="?" Font="TwCenMT14" NormalState="Beige_Black" MouseOver="White_Black" ButtonDown="Beige_Black_Alpha" ID="VD_MilInfo" />
+				<!--Tech-->
+				<Image Anchor="L,C" Offset="0,0" Size="26.20" >
+					<Label Anchor="L,C" Offset="2,-2" Font="TwCenMT16" ID="VD_ResIcon" String="[ICON_RESEARCH]" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
+				</Image>
+				<TextButton Offset="0,0" Anchor="C,C" String="?" Font="TwCenMT14" NormalState="Beige_Black" MouseOver="White_Black" ButtonDown="Beige_Black_Alpha" ID="VD_ResInfo" />
+				<!--Culture/Policy-->
+				<Image Anchor="L,C" Offset="0,0" Size="26.20" >
+					<Label Anchor="L,C" Offset="2,-2" Font="TwCenMT16" ID="VD_CulIcon" String="[ICON_CULTURE]" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
+				</Image>
+				<TextButton Offset="0,0" Anchor="C,C" String="?" Font="TwCenMT14" NormalState="Beige_Black" MouseOver="White_Black" ButtonDown="Beige_Black_Alpha" ID="VD_CulInfo" />
+				<!--Treasury/Gold-->
+				<Image Anchor="L,C" Offset="0,0" Size="26.20" >
+					<Label Anchor="L,C" Offset="2,-2" Font="TwCenMT16" ID="VD_TreIcon" String="[ICON_GOLD]" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
+				</Image>
+				<TextButton Offset="0,0" Anchor="C,C" String="?" Font="TwCenMT14" NormalState="Beige_Black" MouseOver="White_Black" ButtonDown="Beige_Black_Alpha" ID="VD_TreInfo" />
 			</Stack>
-			<Stack Anchor="R,B" Offset="0,20" Padding="15" StackGrowth="Bottom" ID="LeftInfoStack" Hidden="0">
-				<Label Anchor="R,L" Offset="0,0" Font="TwCenMT14" ID="PlayerStabilityStatsText" String="STABLE" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
-				<Label Anchor="R,L" Offset="0,0" Font="TwCenMT14" ID="PlayerGovtStatsText" String="" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
-				<Label Anchor="R,L" Offset="0,0" Font="TwCenMT14" ID="PlayerEcoStatsText" String="" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" />
-			</Stack>
+
+			<!-- Row 3: Rationale (hidden when empty) -->
+			<Label Anchor="L,T" Offset="98,58" Font="TwCenMT14" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" WrapWidth="780" String="" ID="VD_RationaleLabel" Hidden="1"/>
 		</Box>
 	</Instance>
-
-	<Grid Size="993,900" Anchor="C,C" Offset="0.0" Padding="0,0" Style="Grid9DetailFive140" ID="WorldCivsList" Hidden="1" ConsumeMouse="1" >
-		<Image ID="HorizontalTrim1" Anchor="C,T" Offset="0,64" Texture="HorizontalTrim.dds" Size="958.5"  />
-
-		<!-- X Presents Label  -->
-		<Label ID="PresentsLabel" Anchor="C,T" Offset="0,20" Font="TwCenMT16" FontStyle="Shadow" ColorSet="Beige_Black_Alpha" String="" />
-		<Label ID="ListNameLabel" Anchor="C,T" Offset="0,18" Font="TwCenMT22" FontStyle="Shadow" ColorSet="Beige_Black_Alpha" String="{TXT_KEY_JFD_OM_CIVILIZATION_INFO_TITLE:upper}"/>
-
-		<ScrollPanel AutoScrollBar="0" Anchor="L,T" Offset="12,76" Size="434,708" ID="PlayerListScrollPanel" Vertical="1" >
-			<Stack Anchor="L,T" Size="428,490" StackGrowth="B" Padding="-6" ID="PlayerListStack" />
-			<ScrollBar  Offset="508,0" Style="VertSlider" Anchor="R,C" AnchorSide="O,I" Length="708" />
-		</ScrollPanel>
-
-		<Image ID="HorizontalTrim2" Anchor="C,B" Offset="0,110" Texture="HorizontalTrim.dds" Size="958.5" />
-
-		<Box Anchor="C,B" AnchorSide="I.I" Offset="0,54"   Size="458,70" Color="255,255,255,0" >
-			<!-- TXT_KEY_CLOSE Button -->
-			<GridButton Anchor="L,B"  Style="SmallButton" Size="150,32"  Offset="-220,0" StateOffsetIncrement="0,0" ID="CloseButton" ToolTip="TXT_KEY_CLOSE" >
-				<Label Anchor="C,C"  Offset="0,0"  String="TXT_KEY_CLOSE" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow"  />
-			</GridButton>
-		</Box>
-	</Grid>
 
 	<Instance Name="RelationsCivInstance">
 		<Box Size="32,32" Color="255,255,255,0" ID="RelationsCivBase">
@@ -466,14 +472,14 @@
 			</PullDown>-->
 
 			<!-- VD Stage 4: LLM rationale display -->
-			<Button Anchor="L,T" Offset="130,118" Size="480,135" Color="50,50,50,128" ID="VD_InfoBox" Hidden="1" NoStateChange="1">
+			<Button Anchor="L,T" Offset="130,118" Size="480,135" Color="Black" ID="VD_InfoBox" Hidden="1" NoStateChange="1">
 				<ShowOnMouseOver>
 					<AlphaAnim Anchor="C,C" Size="480,135" Offset="0,0" Pause="0" Cycle="Bounce" Speed="1" AlphaStart="0.15" AlphaEnd="0" ID="VD_InfoBoxHL">
 						<Box Size="480,135" Color="255,255,255,255" ID="VD_InfoBoxHLBox"/>
 					</AlphaAnim>
 				</ShowOnMouseOver>
 				<Grid Anchor="L,T" Offset="0,0" ID="VD_RationaleBox">
-					<Label Anchor="L,T" Offset="4,4" Font="TwCenMT14" ColorSet="Beige_Black_Alpha" FontStyle="Shadow" WrapWidth="472" String="" ID="VD_RationaleText"/>
+					<Label Anchor="L,T" Offset="4,4" Font="TwCenMT14" ColorSet="Beige_Black_Alpha" FontStyle="Stroke" WrapWidth="472" String="" ID="VD_RationaleText"/>
 				</Grid>
 			</Button>
 
@@ -488,7 +494,7 @@
 				<Image Anchor="R,T" Offset="0,0" Size="32.32" Texture="mainopen32.dds" ID="ShowInterfaceMO" />
 				<AlphaAnim Anchor="R,T" Offset="0,0" Size="32.32"  TextureOffset="0.0" Texture="mainopenhl32.dds"  Pause="0" Cycle="Bounce" Speed="2" AlphaStart="0.95" AlphaEnd="0.55" ID="ShowInterfaceHL" />
 			</ShowOnMouseOver>
-		</Button>
+		</Button>		
 
 		<Button Hidden="1" Anchor="L,T" NoStateChange="1" Offset="-5,155"  Texture="45x45baseframe.dds" Size="45.45" ID="CultureButton" >
 			<Image Anchor="C,C"  Size="45.45" ID="CultureIcon" Hidden="0"/>
@@ -496,6 +502,28 @@
 
 		<!--</ShowOnMouseOver>-->
 	</Container>
+
+	<Grid Size="993,900" Anchor="C,C" Offset="0.0" Padding="0,0" Style="Grid9DetailFive140" ID="WorldCivsList" Hidden="1" ConsumeMouse="1" >
+		<Image ID="HorizontalTrim1" Anchor="C,T" Offset="0,64" Texture="HorizontalTrim.dds" Size="958.5"  />
+
+		<!-- X Presents Label  -->
+		<Label ID="PresentsLabel" Anchor="C,T" Offset="0,20" Font="TwCenMT16" FontStyle="Shadow" ColorSet="Beige_Black_Alpha" String="" />
+		<Label ID="ListNameLabel" Anchor="C,T" Offset="0,18" Font="TwCenMT22" FontStyle="Shadow" ColorSet="Beige_Black_Alpha" String="{TXT_KEY_JFD_OM_CIVILIZATION_INFO_TITLE:upper}"/>
+
+		<ScrollPanel AutoScrollBar="0" Anchor="L,T" Offset="12,76" Size="434,708" ID="PlayerListScrollPanel" Vertical="1" >
+			<Stack Anchor="L,T" Size="428,490" StackGrowth="B" Padding="-6" ID="PlayerListStack" />
+			<ScrollBar  Offset="508,0" Style="VertSlider" Anchor="R,C" AnchorSide="O,I" Length="708" />
+		</ScrollPanel>
+
+		<Image ID="HorizontalTrim2" Anchor="C,B" Offset="0,110" Texture="HorizontalTrim.dds" Size="958.5" />
+
+		<Box Anchor="C,B" AnchorSide="I.I" Offset="0,54"   Size="458,70" Color="255,255,255,0" >
+			<!-- TXT_KEY_CLOSE Button -->
+			<GridButton Anchor="L,B"  Style="SmallButton" Size="150,32"  Offset="-220,0" StateOffsetIncrement="0,0" ID="CloseButton" ToolTip="TXT_KEY_CLOSE" >
+				<Label Anchor="C,C"  Offset="0,0"  String="TXT_KEY_CLOSE" Font="TwCenMT18" ColorSet="Beige_Black_Alpha" FontStyle="Shadow"  />
+			</GridButton>
+		</Box>
+	</Grid>
 
 	<Image Anchor="C,T" Offset="0,0" Texture="topcentreaiobserver.dds" Size="450.42" Hidden="1" ID="TopCentre">
 		<!--<Stack Anchor="C,C" Offset="0,0"  StackGrowth="Right" ID="RelationsCivStack" Padding="0"/>-->

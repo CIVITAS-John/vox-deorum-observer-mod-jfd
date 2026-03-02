@@ -3,7 +3,8 @@
     "allow": [
       "WebFetch(domain:github.com)",
       "Bash(curl -s \"https://api.github.com/repos/mpeterv/luacheck/releases/latest\")",
-      "Bash(python -:*)"
+      "Bash(python -:*)",
+      "Bash(find \"d:/Documents/My Games/Sid Meier''s Civilization 5/MODS/\\(3b\\) AI Observer Interface/Lua/UI\" -name \"*.xml\")"
     ]
   }
 }

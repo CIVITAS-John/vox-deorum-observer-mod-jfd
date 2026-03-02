@@ -17,6 +17,93 @@ local function VD_Log(...)
 	print("[VD]", ...)
 end
 
+-------------------------------------------------
+-- VD: Shared helper functions
+-------------------------------------------------
+
+-- Returns icon, shortLabel, description for a player's grand strategy
+local function VD_GetGrandStrategy(pPlayer)
+	if not pPlayer:GetCapitalCity() then
+		return "[ICON_CAPITAL]", "-", "Undecided"
+	end
+	local iGS = pPlayer:GetGrandStrategy()
+	if iGS == 0 then     return "[ICON_CULTURE]",    "Culture",    "Culture Victory"
+	elseif iGS == 1 then return "[ICON_INFLUENCE]",   "Diplomacy",  "Diplomacy Victory"
+	elseif iGS == 2 then return "[ICON_RESEARCH]",    "Science",    "Science Victory"
+	elseif iGS == 3 then return "[ICON_WAR]",         "Conquest",   "Conquest Victory"
+	else                  return "[ICON_CAPITAL]",     "-",          "Undecided"
+	end
+end
+
+-- Returns formatted population string with "k" suffix for large values
+local function VD_FormatPopulation(pPlayer)
+	local iPop = pPlayer:GetTotalPopulation()
+	if iPop >= 1000 then
+		return tostring(Game.GetRound(iPop / 1000)) .. "k"
+	end
+	return tostring(iPop)
+end
+
+-- Returns icon, rateText, tooltip for a player's gold/treasury display
+local function VD_GetGoldDisplay(pPlayer)
+	local iGold = pPlayer:GetGold()
+	local iGoldRate = pPlayer:CalculateGoldRate()
+	local icon
+	if iGold == 0 and iGoldRate < 0 then     icon = "[ICON_GOLD_EMP]"
+	elseif iGoldRate == 0 then                icon = "[ICON_GOLD_NEU]"
+	elseif iGoldRate < 0 then                 icon = "[ICON_GOLD_NEG]"
+	else                                      icon = "[ICON_GOLD_POS]"
+	end
+	local rateText
+	if iGoldRate >= 0 then
+		rateText = Locale.ConvertTextKey("[COLOR_JFD_OVERLAY_YIELD_GOLD]+{1_Num}[ENDCOLOR]", iGoldRate)
+	else
+		rateText = Locale.ConvertTextKey("[COLOR_WARNING_TEXT]{1_Num}[ENDCOLOR]", iGoldRate)
+	end
+	local tooltip = Locale.ConvertTextKey("{1_Desc} Treasury: {2_Num} gold | Net: {3_Num}/turn", icon, iGold, iGoldRate)
+	return icon, rateText, tooltip
+end
+
+-- Returns first strategy/flavors/status-quo rationale and turn, or nil
+local function VD_GetFirstRationale(playerID)
+	local actionData = VD_Actions[playerID]
+	if not actionData or #actionData.list == 0 then return nil end
+	for _, action in ipairs(actionData.list) do
+		if action.rationale and action.rationale ~= "" then
+			local t = action.actionType
+			if t == "strategy" or t == "flavors" or t == "status-quo" then
+				return action.rationale, actionData.turn
+			end
+		end
+	end
+	return nil
+end
+
+-- Sets an icon+value stat control pair with shared tooltip
+local function VD_SetStatControl(iconCtrl, infoCtrl, iconStr, valueStr, tooltip)
+	if iconStr then iconCtrl:SetText(iconStr) end
+	iconCtrl:SetToolTipString(tooltip)
+	infoCtrl:SetText(valueStr)
+	infoCtrl:SetToolTipString(tooltip)
+end
+
+-- Constants for popup entry dynamic height
+local VD_ENTRY_BASE_HEIGHT = 62   -- rationale label Y offset (58) + 4px padding
+local VD_ENTRY_NO_RATIONALE_HEIGHT = 58  -- header + stats rows only
+
+-- Resizes a popup entry box and its background anim grids to a given height
+local function VD_ResizeEntryBox(controlTable, height)
+	controlTable.PlayerEntryBox:SetSizeY(height)
+	controlTable.PlayerEntryAnimGrid:SetSizeY(height - 3)
+	local animH = height
+	controlTable.PlayerEntryAnim:SetSizeY(animH)
+	controlTable.PlayerEntryAnimGrid2:SetSizeY(animH)
+	controlTable.PlayerEntryAnimGridGA:SetSizeY(animH)
+	controlTable.PlayerEntryAnimGridDA:SetSizeY(animH)
+	controlTable.PlayerEntryAnimGridNA:SetSizeY(animH)
+end
+
+-------------------------------------------------
 
 local function VD_UpdatePanelExtras(playerID)
 	local pPlayer = Players[playerID]
@@ -24,28 +111,16 @@ local function VD_UpdatePanelExtras(playerID)
 		Controls.VD_InfoBox:SetHide(true)
 		return
 	end
-	local actionData = VD_Actions[playerID]
-	if not actionData or #actionData.list == 0 then
-		Controls.VD_InfoBox:SetHide(true)
-		return
-	end
 
-	local firstRationale = nil
-	for _, action in ipairs(actionData.list) do
-		if not firstRationale and action.rationale and action.rationale ~= "" then
-			local t = action.actionType
-			if t == "strategy" or t == "flavors" or t == "status-quo" then
-				firstRationale = action.rationale
-			end
-		end
-	end
+	local firstRationale = VD_GetFirstRationale(playerID)
 
 	if firstRationale then
+		local rationaleY = Controls.VD_RationaleBox:GetSizeY()
 		Controls.VD_RationaleText:SetText(firstRationale)
 		Controls.VD_RationaleBox:DoAutoSize()
-		Controls.VD_InfoBox:SetSizeY(Controls.VD_RationaleBox:GetSizeY())
-		Controls.VD_InfoBoxHL:SetSizeY(Controls.VD_RationaleBox:GetSizeY())
-		Controls.VD_InfoBoxHLBox:SetSizeY(Controls.VD_RationaleBox:GetSizeY())
+		Controls.VD_InfoBox:SetSizeY(rationaleY + 3)
+		Controls.VD_InfoBoxHL:SetSizeY(rationaleY + 3)
+		Controls.VD_InfoBoxHLBox:SetSizeY(rationaleY + 3)
 		Controls.VD_InfoBox:SetHide(false)
 	else
 		Controls.VD_InfoBox:SetHide(true)
@@ -308,29 +383,7 @@ function UpdateNewData(playerID, szTag)
 		local pCapital = pPlayer:GetCapitalCity()
 		if pCapital then
 			--GRAND STRATEGY (repurposed capital slot)
-			local iGS = pPlayer:GetGrandStrategy()
-			local strGSFont, strGSShort, strGSDesc
-			if iGS == 0 then
-				strGSFont = "[ICON_CULTURE]"
-				strGSShort = "Cult."
-				strGSDesc = "Culture Victory"
-			elseif iGS == 1 then
-				strGSFont = "[ICON_INFLUENCE]"
-				strGSShort = "Dipl."
-				strGSDesc = "Diplomacy Victory"
-			elseif iGS == 2 then
-				strGSFont = "[ICON_RESEARCH]"
-				strGSShort = "Sci."
-				strGSDesc = "Science Victory"
-			elseif iGS == 3 then
-				strGSFont = "[ICON_WAR]"
-				strGSShort = "War"
-				strGSDesc = "Conquest Victory"
-			else
-				strGSFont = "[ICON_CAPITAL]"
-				strGSShort = "-"
-				strGSDesc = "No Grand Strategy"
-			end
+			local strGSFont, strGSShort, strGSDesc = VD_GetGrandStrategy(pPlayer)
 			local strGSTT = Locale.ConvertTextKey("{1_Desc} Grand Strategy: {2_Desc}", strGSFont, strGSDesc)
 			Controls.CapIcon:SetText(strGSFont)
 			Controls.CapIcon:SetToolTipString(strGSTT)
@@ -354,19 +407,9 @@ function UpdateNewData(playerID, szTag)
 			Controls.InfoStack:ReprocessAnchoring()
 			
 			--POP.
-			-- local iPop = Game.GetRound(pPlayer:GetRealPopulation())			
-			local iPop = pPlayer:GetTotalPopulation()
-			local strPop = tostring(iPop)
-			if iPop >= 1000 then
-				iPop = Game.GetRound(iPop/1000)
-				strPop = tostring(iPop) .. "k"
-			end
-			local strPopShortDesc = Locale.ConvertTextKey("{1_Desc}", strPop)
+			local strPop = VD_FormatPopulation(pPlayer)
 			local strPopTT = Locale.ConvertTextKey("[ICON_CITIZEN] Population: {1_Desc}", strPop)
-			Controls.PopIcon:SetText("[ICON_CITIZEN]")
-			Controls.PopIcon:SetToolTipString(strPopTT)
-			Controls.PopInfo:SetText(strPopShortDesc)
-			Controls.PopInfo:SetToolTipString(strPopTT)
+			VD_SetStatControl(Controls.PopIcon, Controls.PopInfo, "[ICON_CITIZEN]", strPop, strPopTT)
 			
 			Controls.InfoStack:SetHide(false)
 			Controls.InfoStack:ReprocessAnchoring()
@@ -600,25 +643,7 @@ function UpdateNewData(playerID, szTag)
 			Controls.InfoStack:ReprocessAnchoring()
 			
 			--GOLD (net income display; tooltip shows treasury total)
-			local iGold = pPlayer:GetGold()
-			local iGoldRate = pPlayer:CalculateGoldRate()
-			local strTreFont
-			if iGold == 0 and iGoldRate < 0 then
-				strTreFont = "[ICON_GOLD_EMP]"
-			elseif iGoldRate == 0 then
-				strTreFont = "[ICON_GOLD_NEU]"
-			elseif iGoldRate < 0 then
-				strTreFont = "[ICON_GOLD_NEG]"
-			else
-				strTreFont = "[ICON_GOLD_POS]"
-			end
-			local strTreShortDesc
-			if iGoldRate >= 0 then
-				strTreShortDesc = Locale.ConvertTextKey("[COLOR_JFD_OVERLAY_YIELD_GOLD]+{1_Num}[ENDCOLOR]", iGoldRate)
-			else
-				strTreShortDesc = Locale.ConvertTextKey("[COLOR_WARNING_TEXT]{1_Num}[ENDCOLOR]", iGoldRate)
-			end
-			local strTreTT = Locale.ConvertTextKey("{1_Desc} Treasury: {2_Num} gold | Net: {3_Num}/turn", strTreFont, iGold, iGoldRate)
+			local strTreFont, strTreShortDesc, strTreTT = VD_GetGoldDisplay(pPlayer)
 			Controls.TreInfo:LocalizeAndSetText(strTreShortDesc)
 			Controls.TreInfo:SetToolTipString(strTreTT)
 			Controls.TreIcon:LocalizeAndSetText(strTreFont)
@@ -1043,193 +1068,95 @@ function OnWorldCivsListUpdated()
 	
 	for _, worldCiv in pairs(worldCivsTable) do
 		local iPlayerLoop = worldCiv.PlayerID
-		local pPlayer = Players[iPlayerLoop];
-		local iTeam = pPlayer:GetTeam();
-		local pTeam = Teams[iTeam];
-			
+		local pPlayer = Players[iPlayerLoop]
+		local iTeam = pPlayer:GetTeam()
+		local pTeam = Teams[iTeam]
+
+		local controlTable = g_PlayerListInstanceManager:GetInstance()
+
+		-- Leader portrait & civ icon
+		local leader = GameInfo.Leaders[pPlayer:GetLeaderType()]
+		CivIconHookup(iPlayerLoop, 32, controlTable.Icon, controlTable.CivIconBG, controlTable.CivIconShadow, false, true)
+		IconHookup(leader.PortraitIndex, 64, leader.IconAtlas, controlTable.Portrait)
+
+		-- ROW 1: Header — "CIV NAME (model)"
 		local civDesc = Locale.ToUpper(pPlayer:GetCivilizationDescription())
-		local leaderDesc = pPlayer:GetName()
-		
-		-- Use the Civilization_Leaders table to cross reference from this civ to the Leaders table
-		local leader = GameInfo.Leaders[pPlayer:GetLeaderType()];
-		local leaderDescription = leader.Description;
-			
-		local strName
-		local srCivName = pPlayer:GetCivilizationDescription()
-		local strLeaderName = leaderDesc
-		local srGovtName
-		local strGovtStatsName = ""
-		local strEcoStatsName = ""
-		
-		local controlTable = g_PlayerListInstanceManager:GetInstance();
-		
-		if (pPlayer:GetID() == Game.GetActivePlayer()) then
-			strName = civDesc .. " (" .. Locale.ToUpper( "TXT_KEY_POP_VOTE_RESULTS_YOU" ) .. ")"
+		if pPlayer:GetID() == Game.GetActivePlayer() then
+			civDesc = civDesc .. " (YOU)"
+		end
+		local vdLabel = VD_Players[iPlayerLoop]
+		if vdLabel then
+			civDesc = civDesc .. " (" .. vdLabel:gsub("-strategist", "") .. ")"
+		end
+		controlTable.VD_HeaderText:SetText(civDesc)
+
+		-- ROW 1 right: Victory icon + short label
+		local gsIcon, gsShort = VD_GetGrandStrategy(pPlayer)
+		controlTable.VD_VictoryText:SetText(gsIcon .. " " .. gsShort)
+
+		-- ROW 2: Stats bar
+		-- Cities
+		local iCities = pPlayer:GetNumCities()
+		local strCitiesTT = Locale.ConvertTextKey("[ICON_CITY] Cities: {1_Num}", iCities)
+		VD_SetStatControl(controlTable.VD_CitiesIcon, controlTable.VD_CitiesInfo, nil, tostring(iCities), strCitiesTT)
+
+		-- Population
+		local strPop = VD_FormatPopulation(pPlayer)
+		local strPopTT = Locale.ConvertTextKey("[ICON_CITIZEN] Population: {1_Desc}", strPop)
+		VD_SetStatControl(controlTable.VD_PopIcon, controlTable.VD_PopInfo, nil, strPop, strPopTT)
+
+		-- Military supply
+		local iToSupply = pPlayer:GetNumUnitsToSupply()
+		local iSupplied = pPlayer:GetNumUnitsSupplied()
+		local strMil = tostring(iToSupply) .. "/" .. tostring(iSupplied)
+		local strMilTT = Locale.ConvertTextKey("[ICON_STRENGTH] Supply: {1_Num}/{2_Num}", iToSupply, iSupplied)
+		VD_SetStatControl(controlTable.VD_MilIcon, controlTable.VD_MilInfo, nil, strMil, strMilTT)
+
+		-- Tech
+		local iTechs = pTeam:GetTeamTechs():GetTechCount()
+		local iSciencePerTurn = pPlayer:GetScience()
+		local currentResearchID = pPlayer:GetCurrentResearch()
+		local strResTT
+		if currentResearchID > -1 then
+			local techName = Locale.ConvertTextKey(GameInfo.Technologies[currentResearchID].Description)
+			strResTT = Locale.ConvertTextKey("[ICON_RESEARCH] Techs: {1_Num} | +{2_Num}/turn | Researching: {3_Desc}", iTechs, iSciencePerTurn, techName)
 		else
-			strName = civDesc
-		end	
-		
-		CivIconHookup( iPlayerLoop, 32, controlTable.Icon, controlTable.CivIconBG, controlTable.CivIconShadow, false, true);  
-		IconHookup( leader.PortraitIndex, 64, leader.IconAtlas, controlTable.Portrait );
-		
-		--CYCLES OF POWER
-		local cyclePowerID = -1
-		if Player.GetCyclePower then
-			cyclePowerID = pPlayer:GetCyclePower() or -1
-		end				
-		if cyclePowerID ~= -1 then
-			local cyclePower = GameInfo.JFD_CyclePowers[cyclePowerID]
-			controlTable.CyclePower:SetHide(false)		
-			strGovtStatsName = "[COLOR_JFD_VIRTUE][ICON_BULLET][ICON_JFD_CYCLE_OF_POWER] " .. Locale.ToUpper(cyclePower.Description) .. "[ENDCOLOR]"
+			strResTT = Locale.ConvertTextKey("[ICON_RESEARCH] Techs: {1_Num} | +{2_Num}/turn", iTechs, iSciencePerTurn)
+		end
+		VD_SetStatControl(controlTable.VD_ResIcon, controlTable.VD_ResInfo, nil, tostring(iTechs), strResTT)
+
+		-- Culture/Policy
+		local iPolicies = pPlayer:GetNumPolicies()
+		local iCulturePerTurn = pPlayer:GetTotalJONSCulturePerTurn()
+		local strCulTT = Locale.ConvertTextKey("[ICON_CULTURE] Policies + Tenets: {1_Num} | +{2_Num}/turn", iPolicies, iCulturePerTurn)
+		VD_SetStatControl(controlTable.VD_CulIcon, controlTable.VD_CulInfo, nil, tostring(iPolicies), strCulTT)
+
+		-- Treasury/Gold
+		local strTreIcon, strTreRate, strTreTT = VD_GetGoldDisplay(pPlayer)
+		VD_SetStatControl(controlTable.VD_TreIcon, controlTable.VD_TreInfo, strTreIcon, strTreRate, strTreTT)
+
+		controlTable.VD_StatsStack:ReprocessAnchoring()
+
+		-- ROW 3: Rationale (optional) — with dynamic height
+		local rationale, turn = VD_GetFirstRationale(iPlayerLoop)
+		if rationale then
+			controlTable.VD_RationaleLabel:SetText("(Turn " .. tostring(turn) .. ") " .. rationale)
+			controlTable.VD_RationaleLabel:SetHide(false)
+			local rationaleH = controlTable.VD_RationaleLabel:GetSizeY()
+			VD_ResizeEntryBox(controlTable, VD_ENTRY_BASE_HEIGHT + rationaleH)
 		else
-			controlTable.CyclePower:SetHide(true)
+			controlTable.VD_RationaleLabel:SetHide(true)
+			VD_ResizeEntryBox(controlTable, VD_ENTRY_NO_RATIONALE_HEIGHT)
 		end
-		
-		--SOVEREIGNTY
-		local governmentID = -1
-		if Player.GetCurrentGovernment then		
-			governmentID = pPlayer:GetCurrentGovernment()
-			srGovtName = pPlayer:GetGovernmentName(governmentID)	
-			strGovtStatsName = strGovtStatsName .. "[COLOR_JFD_SOVEREIGNTY][ICON_BULLET][ICON_JFD_GOVERNMENT] " .. Locale.ConvertTextKey(GameInfo.JFD_Governments[governmentID].Description) .. "[ENDCOLOR]" 
-			-- strGovtStatsName = strGovtStatsName .. " (" .. srGovtName .. ")" 
-			
-			local factionID = pPlayer:GetDominantFaction()
-			if factionID ~= -1 then
-				strGovtStatsName = strGovtStatsName .. "[COLOR_JFD_SOVEREIGNTY][ICON_BULLET]" .. GameInfo.JFD_Factions[factionID].IconString .. " " .. Locale.ConvertTextKey(GameInfo.JFD_Factions[factionID].Adjective) .. "[ENDCOLOR]" 
-				-- strGovtStatsName = strGovtStatsName .. " (" .. pPlayer:GetFactionName(factionID) .. ")" 
-			end
-		end
-		
-		--IDEOLOGY
-		local ideologyID = Player_GetIdeology(pPlayer)
-		local ideologyFont = nil
-		if ideologyID == -1 then
-			ideologyID = pPlayer:GetDominantPolicyBranchForTitle()
-			ideologyFont = "[ICON_CULTURE]"
-		else
-			ideologyFont = GameInfo.PolicyBranchTypes[ideologyID].IconString
-		end
-		if ideologyID ~= -1 then
-			strGovtStatsName = strGovtStatsName .. "[COLOR_MAGENTA][ICON_BULLET]" .. ideologyFont .. " " .. Locale.ConvertTextKey(GameInfo.PolicyBranchTypes[ideologyID].Description) .. "[ENDCOLOR]	"
-		end
-		
-		--RELIGION
-		local religionID = Player_GetMainReligion(pPlayer)
-		local religionFont = nil
-		if religionID >= 0 and pPlayer:HasCreatedPantheon() then
-			religionFont = GameInfo.Religions[religionID].IconString
-			strGovtStatsName = strGovtStatsName .. "[COLOR_WHITE][ICON_BULLET]" .. religionFont .. Locale.ConvertTextKey(GameInfo.Religions[religionID].Description) .. "[ENDCOLOR]"
-		end
-		
-		--STABILITY
-		--Update status
-		controlTable.PlayerStabilityStatsText:LocalizeAndSetText("[ICON_HAPPINESS_1] [COLOR_HAPPINESS]STABLE[ENDCOLOR]")
-		controlTable.PlayerStabilityStatsText:LocalizeAndSetToolTip("[ICON_HAPPINESS_1] [COLOR_HAPPINESS]STABLE[ENDCOLOR]")
-		if pPlayer:IsEmpireSuperUnhappy() then
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetText("[ICON_HAPPINESS_4] [COLOR_NEGATIVE_TEXT]CIVIL WAR![ENDCOLOR]")
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetToolTip("[ICON_HAPPINESS_4] [COLOR_NEGATIVE_TEXT]CIVIL WAR![ENDCOLOR]")
-		end
-		if pPlayer:IsEmpireVeryUnhappy() then
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetText("[ICON_HAPPINESS_4] [COLOR_NEGATIVE_TEXT]CIVIL WAR![ENDCOLOR]")
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetToolTip("[ICON_HAPPINESS_4] [COLOR_NEGATIVE_TEXT]CIVIL WAR![ENDCOLOR]")
-		end
-		if pPlayer:IsEmpireUnhappy() then
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetText("[ICON_HAPPINESS_3] [COLOR_UNHAPPINESS]REBELLION![ENDCOLOR]")
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetToolTip("[ICON_HAPPINESS_3] [COLOR_UNHAPPINESS]REBELLION![ENDCOLOR]")
-		end
-		if pPlayer:IsGoldenAge() then
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetText("[ICON_GOLDEN_AGE] [COLOR_GOLDEN_AGE]GOLDEN AGE![ENDCOLOR]")
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetToolTip("[ICON_GOLDEN_AGE] [COLOR_GOLDEN_AGE]GOLDEN AGE![ENDCOLOR]")
-		end
-		if Player.IsDarkAge and pPlayer:IsDarkAge() then
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetText("[ICON_DARK_AGE] [COLOR_DARK_AGE]DARK AGE![ENDCOLOR]")
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetToolTip("[ICON_DARK_AGE] [COLOR_DARK_AGE]DARK AGE![ENDCOLOR]")
-		end
-		if pPlayer:IsAnarchy() then
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetText("[ICON_RESISTANCE] [COLOR_RED]ANARCHY![ENDCOLOR]")
-			controlTable.PlayerStabilityStatsText:LocalizeAndSetToolTip("[ICON_RESISTANCE] [COLOR_RED]ANARCHY![ENDCOLOR]")
-		end
-		
-		--AGES
-		-- if pPlayer:IsGoldenAge() then
-			-- controlTable.AgeIcon:SetText("[ICON_GOLDEN_AGE]")
-			-- controlTable.AgeIcon:SetHide(false)
-			-- controlTable.PlayerEntryAnim:Play()
-			-- controlTable.PlayerEntryAnimGridDA:SetHide(true)
-			-- controlTable.PlayerEntryAnimGridNA:SetHide(true)
-			-- controlTable.PlayerEntryAnimGridGA:SetHide(true)
-		-- elseif Player.IsDarkAge and pPlayer:IsDarkAge() then
-			-- controlTable.AgeIcon:SetText("[ICON_DARK_AGE]")
-			-- controlTable.AgeIcon:SetHide(false)
-			-- controlTable.PlayerEntryAnim:Play()
-			-- controlTable.PlayerEntryAnimGridDA:SetHide(true)
-			-- controlTable.PlayerEntryAnimGridNA:SetHide(true)
-			-- controlTable.PlayerEntryAnimGridGA:SetHide(true)
-		-- else
-			controlTable.AgeIcon:SetHide(true)
-			controlTable.PlayerEntryAnim:Stop()
-			controlTable.PlayerEntryAnimGridDA:SetHide(true)
-			controlTable.PlayerEntryAnimGridNA:SetHide(true)
-			controlTable.PlayerEntryAnimGridGA:SetHide(true)
-		-- end
-		local primaryColor, secondaryColor = pPlayer:GetPlayerColors();
-		local backgroundColor = {x = secondaryColor.x, y = secondaryColor.y, z = secondaryColor.z, w = 0.3};
+
+		-- Background color from player colors
+		local _, secondaryColor = pPlayer:GetPlayerColors()
+		local backgroundColor = {x = secondaryColor.x, y = secondaryColor.y, z = secondaryColor.z, w = 0.3}
 		controlTable.PlayerEntryAnimGrid:SetColor(backgroundColor)
-			
-		--GREAT POWER STATUS
-		-- if Player.GetGreatPowerStatus then
-			-- local greatPowerStatusID = pPlayer:GetGreatPowerStatus()
-			-- if greatPowerStatusID ~= -1 then
-				-- local greatPowerStatus = GameInfo.JFD_GreatPowers[greatPowerStatusID]
-				-- strName = greatPowerStatus.IconString .. "[" .. greatPowerStatus.ColorString .. "]" .. strName .. "[ENDCOLOR]"
-				
-				-- local secondaryColor = GameInfo.Colors[greatPowerStatus.ColorString]
-				-- local backgroundColor = {x = secondaryColor.Red, y = secondaryColor.Green, z = secondaryColor.Blue, w = 0.3};
-				-- controlTable.PlayerEntryAnimGrid:SetColor(backgroundColor)
-			-- end
-		-- end
-		
-		--EPITHET
-		if Player.GetEpithetTitle then
-			local strEpithet = pPlayer:GetEpithetTitle()
-			if strEpithet then
-				strLeaderName = strLeaderName .. " " .. Locale.ConvertTextKey(strEpithet)
-			end
-		end
-		
-		--LAND PERCENT
-		local numPlotPercent = Game.GetRound(((pPlayer:GetNumPlots()/Map.GetNumPlots())*100),2)
-		if strEcoStatsName ~= "" then
-			strEcoStatsName = strEcoStatsName .. "[ICON_BULLET]"
-		end
-		strEcoStatsName = strEcoStatsName .. "[ICON_BULLET]"
-		strEcoStatsName = strEcoStatsName .. "Land: " .. numPlotPercent .. "%" 
-			
-		--POPULATION PERCENT
-		local numPopPercent = Game.GetRound(((pPlayer:GetTotalPopulation()/Game.GetTotalPopulation())*100),2)
-		strEcoStatsName = strEcoStatsName .. "[ICON_BULLET]"
-		strEcoStatsName = strEcoStatsName .. "Population: " .. numPopPercent .. "%" 
-		
-		--MILITARY PERCENT
-		local numMilitary = pPlayer:GetMilitaryMight()
-		local numGlobalMilitary = 0
-		for otherPlayerID = 0, GameDefines["MAX_MINOR_CIVS"], 1 do
-			local otherPlayer = Players[otherPlayerID]
-			if otherPlayer:IsAlive() and otherPlayerID ~= playerID then
-				numGlobalMilitary = numGlobalMilitary + otherPlayer:GetMilitaryMight()
-			end
-		end
-		local numMilitaryPercent = Game.GetRound(((numMilitary/numGlobalMilitary)*100),2)
-		strEcoStatsName = strEcoStatsName .. "[ICON_BULLET]"
-		strEcoStatsName = strEcoStatsName .. "Military: " .. numMilitaryPercent .. "%" 
-			
-		controlTable.PlayerGovtStatsText:LocalizeAndSetText(strGovtStatsName)
-		controlTable.PlayerEcoStatsText:LocalizeAndSetText(strEcoStatsName)
-		controlTable.PlayerEcoStatsText:LocalizeAndSetToolTip("TXT_KEY_JFD_WORLD_CIVILIZATIONS_ECO_STATS", numPlotPercent, numPopPercent, numMilitaryPercent)
-		controlTable.PlayerNameText:SetText(strName);
-		controlTable.PlayerCivNameText:SetText("[ICON_BULLET]" .. srCivName);
-		controlTable.PlayerLeaderNameText:SetText("[ICON_BULLET]" .. strLeaderName);
-		controlTable.RightInfoStack:ReprocessAnchoring()
+		controlTable.PlayerEntryAnim:Stop()
+		controlTable.PlayerEntryAnimGridDA:SetHide(true)
+		controlTable.PlayerEntryAnimGridNA:SetHide(true)
+		controlTable.PlayerEntryAnimGridGA:SetHide(true)
 	end
 	
 	Controls.PlayerListStack:CalculateSize();
