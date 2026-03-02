@@ -44,6 +44,8 @@ local function VD_UpdatePanelExtras(playerID)
 		Controls.VD_RationaleText:SetText(firstRationale)
 		Controls.VD_RationaleBox:DoAutoSize()
 		Controls.VD_InfoBox:SetSizeY(Controls.VD_RationaleBox:GetSizeY())
+		Controls.VD_InfoBoxHL:SetSizeY(Controls.VD_RationaleBox:GetSizeY())
+		Controls.VD_InfoBoxHLBox:SetSizeY(Controls.VD_RationaleBox:GetSizeY())
 		Controls.VD_InfoBox:SetHide(false)
 	else
 		Controls.VD_InfoBox:SetHide(true)
