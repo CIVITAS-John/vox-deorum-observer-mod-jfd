@@ -11,6 +11,7 @@ local g_iPlayerForView = Game.GetActivePlayer()
 -- VD: Per-player state for LLM data
 local VD_Players = {}  -- [playerID] = aiLabel string
 local VD_Actions = {}  -- [playerID] = { turn=N, list={ {actionType, summary, rationale}, ... } }
+local g_bWorldCivsAutoOpened = false  -- true if WorldCivsList was auto-opened (not by user)
 
 -- VD: Debug logging — filter Lua.log for "[VD]"
 local function VD_Log(...)
@@ -851,12 +852,31 @@ local function VD_OnAction(playerID, turn, actionType, summary, rationale)
 		if existing then
 			VD_Log("Action: turn rollover for player=" .. tostring(playerID) .. " old=" .. tostring(existing.turn) .. " new=" .. tostring(turn) .. " — clearing list")
 		end
-		VD_Actions[playerID] = { turn = turn, list = {} }
+		VD_Actions[playerID] = { turn = turn, list = {}, switched = false }
 	end
 	table.insert(VD_Actions[playerID].list, { actionType = actionType, summary = summary, rationale = rationale })
-	if playerID == g_iPlayerForView then
+
+	-- Switch panel on first rationale-bearing action (strategy/flavors/status-quo)
+	-- Camera already moved in VD_OnAIProcessingStarted, so skip it here
+	local ad = VD_Actions[playerID]
+	if not ad.switched
+		and (actionType == "strategy" or actionType == "flavors" or actionType == "status-quo") then
+		local pPlayer = Players[playerID]
+		if pPlayer and pPlayer:IsAlive() and pPlayer:IsTurnActive()
+			and not pPlayer:IsBarbarian() and not pPlayer:IsMinorCiv() then
+			ad.switched = true
+			if g_bWorldCivsAutoOpened and not Controls.WorldCivsList:IsHidden() then
+				Controls.WorldCivsList:SetHide(true)
+				g_bWorldCivsAutoOpened = false
+			end
+			g_bPlayerForViewLookup = false
+			OnCivPlayerSelected(playerID)
+			g_bPlayerForViewLookup = true
+		end
+	elseif playerID == g_iPlayerForView then
 		UpdateNewData(playerID)
 	end
+
 	if not Controls.WorldCivsList:IsHidden() then
 		OnWorldCivsListUpdated()
 	end
@@ -913,14 +933,38 @@ function OnCivPlayerSelected(iPlayer)
 end
 -------------------------------------------------
 -- VD Stage 3: Auto-switch panel to the active AI player
--- (placed here so g_bPlayerForViewLookup and OnCivPlayerSelected are in scope)
+-- All major civs: camera moves immediately (no delay)
+-- LLM players: panel switch deferred to VD_OnAction (first rationale action)
+-- VPAI/unknown: panel switch immediate (they won't receive actions)
+-- Minor/barbarian: auto-open WorldCivsList dialog
 local function VD_OnAIProcessingStarted(playerID)
 	local pPlayer = Players[playerID]
 	if not pPlayer then return end
-	if pPlayer:IsBarbarian() then return end
-	if pPlayer:IsMinorCiv() then return end
 	if not pPlayer:IsAlive() then return end
-	VD_Log("Stage3: auto-switch to player=" .. tostring(playerID))
+
+	if pPlayer:IsBarbarian() or pPlayer:IsMinorCiv() then
+		if Controls.WorldCivsList:IsHidden() then
+			g_bWorldCivsAutoOpened = true
+			OnWorldCivsListUpdated()
+		end
+		return
+	end
+
+	-- Move camera immediately for all major civs (before heavy UI work)
+	local pCap = pPlayer:GetCapitalCity()
+	local pPlot = pCap and Map.GetPlot(pCap:GetX(), pCap:GetY()) or pPlayer:GetStartingPlot()
+	if pPlot then
+		UI.LookAt(pPlot)
+	end
+
+	-- LLM player — panel switch deferred to VD_OnAction on first rationale
+	if VD_Players[playerID] then return end
+
+	-- VPAI/unknown — switch panel immediately (camera already moved above)
+	if g_bWorldCivsAutoOpened and not Controls.WorldCivsList:IsHidden() then
+		Controls.WorldCivsList:SetHide(true)
+		g_bWorldCivsAutoOpened = false
+	end
 	g_bPlayerForViewLookup = false
 	OnCivPlayerSelected(playerID)
 	g_bPlayerForViewLookup = true
@@ -1047,8 +1091,12 @@ Controls.OverlayMapsButton:RegisterCallback( Mouse.eLClick, OnOverlayMapsButton 
 -------------------------------------------------
 local g_PlayerListInstanceManager = InstanceManager:new( "PlayerEntryInstance", "PlayerEntryBox", Controls.PlayerListStack );
 function OnWorldCivsListUpdated()
+	local wasHidden = Controls.WorldCivsList:IsHidden()
 	Controls.WorldCivsList:SetHide(false)
-	
+	if wasHidden and InStrategicView() then
+		ToggleStrategicView()
+	end
+
 	g_PlayerListInstanceManager:ResetInstances();
 	
 	local worldCivsTable = {}
@@ -1104,7 +1152,7 @@ function OnWorldCivsListUpdated()
 
 		-- ROW 1 right: Victory icon + short label
 		local gsIcon, gsShort = VD_GetGrandStrategy(pPlayer)
-		controlTable.VD_VictoryText:SetText(gsIcon .. " " .. gsShort)
+		controlTable.VD_VictoryText:SetText(gsIcon .. " Goal: " .. gsShort)
 
 		-- ROW 2: Stats bar
 		-- Cities
@@ -1175,7 +1223,10 @@ function OnWorldCivsListUpdated()
 	Controls.PlayerListStack:ReprocessAnchoring();
 	Controls.PlayerListScrollPanel:CalculateInternalSize();
 end
-Controls.WorldCivsButton:RegisterCallback( Mouse.eLClick, OnWorldCivsListUpdated );
+Controls.WorldCivsButton:RegisterCallback(Mouse.eLClick, function()
+	g_bWorldCivsAutoOpened = false
+	OnWorldCivsListUpdated()
+end);
 
 -- function OnWorldCivsRClicked()
 	-- LuaEvents.UI_ShowGovernmentOverview()
@@ -1185,6 +1236,7 @@ Controls.WorldCivsButton:RegisterCallback( Mouse.eLClick, OnWorldCivsListUpdated
 -------------------------------------------------
 function OnWorldCivsListClose()
 	Controls.WorldCivsList:SetHide(true)
+	g_bWorldCivsAutoOpened = false
 end
 Controls.CloseButton:RegisterCallback( Mouse.eLClick, OnWorldCivsListClose );
 -------------------------------

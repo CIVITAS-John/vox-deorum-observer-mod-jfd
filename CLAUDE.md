@@ -71,16 +71,30 @@ This is a fork of **JFD's Utilities — AI Observer Interface (v11)**, a Civ5 mo
 
 Civ5 does not hot-reload mods mid-game. To test Lua changes:
 1. Modify the `.lua` file.
-2. Run `./luacheck.exe Lua/**/*.lua` from the repo root and fix any warnings.
+2. Run luacheck and fix any warnings (see below).
 3. Ask the user to test the game.
+
+### Luacheck
+
+The repo root is already the working directory, so run luacheck directly — **do not `cd`**:
+
+```bash
+./luacheck.exe Lua/**/*.lua
+```
+
+If you need to check a single file, use its relative path from the repo root:
+
+```bash
+./luacheck.exe Lua/UI/Overrides/TopPanel.lua
+```
 
 ---
 
 ## Post-Task: Sync Modinfo MD5s
 
-**After completing any task** that creates, edits, or removes files tracked by the mod, run from the repo root:
+**After completing any task** that creates, edits, or removes files tracked by the mod, sync MD5 hashes — **do not `cd`**:
 
-```
+```bash
 python update_md5.py
 ```
 
