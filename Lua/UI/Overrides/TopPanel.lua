@@ -8,6 +8,15 @@ include("JFD_AIObserver_Utils.lua");
 
 local g_iPlayerForView = Game.GetActivePlayer()
 
+-- VD: Per-player state for LLM data
+local VD_Players = {}  -- [playerID] = aiLabel string
+local VD_Actions = {}  -- [playerID] = { turn=N, list={ {actionType, summary, rationale}, ... } }
+
+-- VD: Debug logging — filter Lua.log for "[VD]"
+local function VD_Log(...)
+	print("[VD]", ...)
+end
+
 local eraNumerals = {}
 eraNumerals[0] = "I"
 eraNumerals[1] = "II"
@@ -679,8 +688,16 @@ function UpdateNewData(playerID, szTag)
 		if Controls.PlayerNameText:GetSizeX() > 180 then
 			Controls.PlayerNameText:SetFontByName("TwCenMT14");	
 		end
-		Controls.PlayerLeaderNameText:SetText(strLeaderName);
-		
+		-- VD Stage 2: show aiLabel for LLM players, "Unknown" until data arrives
+		local vdLabel = VD_Players[playerID]
+		if vdLabel then
+			VD_Log("Stage2: player=" .. tostring(playerID) .. " label=" .. vdLabel)
+			Controls.PlayerLeaderNameText:SetText(vdLabel)
+		else
+			VD_Log("Stage2: player=" .. tostring(playerID) .. " no VD data, showing Unknown")
+			Controls.PlayerLeaderNameText:SetText("Unknown")
+		end
+
 		--Update Relationships
 		local civRelationsCount = 0
 		
@@ -730,6 +747,34 @@ Events.SerialEventTurnTimerDirty.Add(UpdateNewData);
 Events.SerialEventCityInfoDirty.Add(UpdateNewData);
 Events.SequenceGameInitComplete.Add(UpdateNewData);
 
+-------------------------------------------------
+-- VD Stage 1: Accumulate per-player LLM state
+-------------------------------------------------
+local function VD_OnPlayerInfo(playerID, aiLabel)
+	VD_Log("PlayerInfo: player=" .. tostring(playerID) .. " label=" .. tostring(aiLabel))
+	VD_Players[playerID] = aiLabel
+	if playerID == g_iPlayerForView then
+		UpdateNewData(playerID)
+	end
+end
+LuaEvents.VoxDeorumPlayerInfo.Add(VD_OnPlayerInfo)
+
+local function VD_OnAction(playerID, turn, actionType, summary, rationale)
+	VD_Log("Action: player=" .. tostring(playerID) .. " turn=" .. tostring(turn) .. " type=" .. tostring(actionType) .. " summary=" .. tostring(summary))
+	local existing = VD_Actions[playerID]
+	if existing == nil or existing.turn ~= turn then
+		if existing then
+			VD_Log("Action: turn rollover for player=" .. tostring(playerID) .. " old=" .. tostring(existing.turn) .. " new=" .. tostring(turn) .. " — clearing list")
+		end
+		VD_Actions[playerID] = { turn = turn, list = {} }
+	end
+	table.insert(VD_Actions[playerID].list, { actionType = actionType, summary = summary, rationale = rationale })
+	if playerID == g_iPlayerForView then
+		UpdateNewData(playerID)
+	end
+end
+LuaEvents.VoxDeorumAction.Add(VD_OnAction)
+
 function OnShowInterfaceButton()
 	if Controls.PlayerInfoGrid:IsHidden() then
 		Controls.PlayerInfoGrid:SetHide(false)
@@ -778,6 +823,21 @@ function OnCivPlayerSelected(iPlayer)
 	UpdateNewData(iPlayer)
 	PopulateCivPulldown()
 end
+-------------------------------------------------
+-- VD Stage 3: Auto-switch panel to the active AI player
+-- (placed here so g_bPlayerForViewLookup and OnCivPlayerSelected are in scope)
+local function VD_OnAIProcessingStarted(playerID)
+	local pPlayer = Players[playerID]
+	if not pPlayer then return end
+	if pPlayer:IsBarbarian() then return end
+	if pPlayer:IsMinorCiv() then return end
+	if not pPlayer:IsAlive() then return end
+	VD_Log("Stage3: auto-switch to player=" .. tostring(playerID))
+	g_bPlayerForViewLookup = false
+	OnCivPlayerSelected(playerID)
+	g_bPlayerForViewLookup = true
+end
+Events.AIProcessingStartedForPlayer.Add(VD_OnAIProcessingStarted)
 -------------------------------------------------
 function SetCivPlayerDetails(iPlayer, pPlayer, strName, entry)	
 	local civ = GameInfo.Civilizations[pPlayer:GetCivilizationType()]

@@ -140,7 +140,7 @@
     <File md5="6D270B3848ACB913C36A6534392BA4BC" import="0">Lua/UI/Overrides/MiniMapPanel.xml</File>
     <File md5="C80B7BB2F60CA2FC37C2D389BF18B59D" import="1">Lua/UI/Overrides/NewTurn.lua</File>
     <File md5="17F59F6E9D3F22C3DCEE613F5F6FC60A" import="1">Lua/UI/Overrides/NewTurn.xml</File>
-    <File md5="A07C2DFB3B5DFAF8BF858FEEA08AAC15" import="1">Lua/UI/Overrides/TopPanel.lua</File>
+    <File md5="3055A7BD3D3FF66B42A0AAC11B999039" import="1">Lua/UI/Overrides/TopPanel.lua</File>
     <File md5="341E692E8F3E784EFA4D9E9B5BC5AF13" import="1">Lua/UI/Overrides/TopPanel.xml</File>
     <File md5="1ACD2840B8620EE3802C3A660BA23ED9" import="1">Lua/UI/Overrides/TopPanel_Back.lua</File>
     <File md5="4CB46E99A636514752F8322D4499F37E" import="0">Lua/UI/Overrides/TurnProcessing.lua</File>
@@ -156,8 +156,8 @@
     <File md5="69A714E36C1BEC8D13D88DC143D68B12" import="0">Lua/UI/WC Stuff/VoteResultsPopup.lua</File>
     <File md5="73D968613C1596A46891ED5A7D208FB5" import="0">Lua/UI/WC Stuff/VoteResultsPopup.xml</File>
     <File md5="D56D1A6DF3877F3326F6E437F296F818" import="1">Lua/Utilities/JFD_AIObserver_Minimap_Utils.lua</File>
-    <File md5="9347D210861AC33084C47D28FE252F2E" import="1">Lua/Utilities/JFD_OverlayMaps_Utils.lua</File>
-    <File md5="808D86B8A746B0E30C9D9C9C52BFC038" import="1">Lua/Utilities/JFD_AIObserver_Utils.lua</File>
+    <File md5="D1C76850EFF453F162397BD73BB30583" import="1">Lua/Utilities/JFD_OverlayMaps_Utils.lua</File>
+    <File md5="661E9BD73D4E223EC2399C1346301464" import="1">Lua/Utilities/JFD_AIObserver_Utils.lua</File>
   </Files>
   <Actions>
     <OnModActivated>

@@ -76,6 +76,20 @@ Civ5 does not hot-reload mods mid-game. To test Lua changes:
 
 ---
 
+## Post-Task: Sync Modinfo MD5s
+
+**After completing any task** that creates, edits, or removes files tracked by the mod, run from the repo root:
+
+```
+python update_md5.py
+```
+
+This rewrites every `md5=` attribute in `JFD's Utilities - AI Observer Interface (v 11).modinfo` to match the current file on disk. Civ5 validates these hashes at load time — a stale hash causes the file to be silently ignored by the engine.
+
+Run this as the final step before handing work back to the user, even if you think no tracked file changed.
+
+---
+
 ## vox-deorum Integration Notes
 
 - The vox-deorum TypeScript backend communicates with the Civ5 Lua layer via named pipes or file I/O (see vox-deorum repo for protocol details).
