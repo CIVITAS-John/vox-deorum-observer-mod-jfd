@@ -927,6 +927,7 @@ function OnCivPlayerSelected(iPlayer)
 		else
 			pPlot = pPlayer:GetStartingPlot()
 		end
+		VD_Log("pPlot: " .. tostring(pPlot))
 		if pPlot then
 			UI.LookAt(pPlot);
 		end
@@ -953,7 +954,7 @@ local function VD_OnAIProcessingStarted(playerID)
 		return
 	end
 
-	-- LLM player — close auto-opened dialog; switch immediately if cached rationale exists,
+	-- LLM player — close auto-opened dialog; switch immediately if current-turn rationale exists,
 	-- otherwise defer panel switch to VD_OnAction on first rationale
 	if VD_Players[playerID] then
 		if g_bWorldCivsAutoOpened and not Controls.WorldCivsList:IsHidden() then
@@ -961,7 +962,8 @@ local function VD_OnAIProcessingStarted(playerID)
 			Controls.Tab:SetHide(false)
 			g_bWorldCivsAutoOpened = false
 		end
-		if VD_CachedRationale[playerID] then
+		local cached = VD_CachedRationale[playerID]
+		if cached and cached.turn == Game.GetGameTurn() then
 			OnCivPlayerSelected(playerID)
 		end
 		return
