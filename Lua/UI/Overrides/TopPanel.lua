@@ -895,18 +895,10 @@ end
 LuaEvents.VoxDeorumAction.Add(VD_OnAction)
 
 function OnShowInterfaceButton()
-	if Controls.PlayerInfoGrid:IsHidden() then
-		Controls.PlayerInfoGrid:SetHide(false)
-		Controls.DiploPanelLeft:SetHide(false)
-		Controls.ShowInterfaceButton:SetTexture("mainclose.dds")
-		Controls.ShowInterfaceMO:SetTexture("mainclose.dds")
-		Controls.ShowInterfaceHL:SetTexture("mainclosehl.dds")
+	if Controls.Tab:IsHidden() then
+		Controls.Tab:SetHide(false)
 	else
-		Controls.PlayerInfoGrid:SetHide(true)
-		Controls.DiploPanelLeft:SetHide(true)
-		Controls.ShowInterfaceButton:SetTexture("mainopen.dds")
-		Controls.ShowInterfaceMO:SetTexture("mainopen.dds")
-		Controls.ShowInterfaceHL:SetTexture("mainopenhl.dds")
+		Controls.Tab:SetHide(true)
 	end
 end
 Controls.ShowInterfaceButton:RegisterCallback( Mouse.eLClick, OnShowInterfaceButton );
@@ -973,8 +965,7 @@ local function VD_OnAIProcessingStarted(playerID)
 	if VD_Players[playerID] then
 		if g_bWorldCivsAutoOpened and not Controls.WorldCivsList:IsHidden() then
 			Controls.WorldCivsList:SetHide(true)
-			Controls.PlayerInfoGrid:SetHide(false)
-			Controls.DiploPanelLeft:SetHide(false)
+			Controls.Tab:SetHide(false)
 			g_bWorldCivsAutoOpened = false
 		end
 		if VD_CachedRationale[playerID] then
@@ -986,8 +977,7 @@ local function VD_OnAIProcessingStarted(playerID)
 	-- VPAI/unknown — switch panel immediately (camera already moved above)
 	if g_bWorldCivsAutoOpened and not Controls.WorldCivsList:IsHidden() then
 		Controls.WorldCivsList:SetHide(true)
-		Controls.PlayerInfoGrid:SetHide(false)
-		Controls.DiploPanelLeft:SetHide(false)
+		Controls.Tab:SetHide(false)
 		g_bWorldCivsAutoOpened = false
 	end
 	g_bPlayerForViewLookup = false
@@ -1118,8 +1108,7 @@ local g_PlayerListInstanceManager = InstanceManager:new( "PlayerEntryInstance", 
 function OnWorldCivsListUpdated()
 	local wasHidden = Controls.WorldCivsList:IsHidden()
 	Controls.WorldCivsList:SetHide(false)
-	Controls.PlayerInfoGrid:SetHide(true)
-	Controls.DiploPanelLeft:SetHide(true)
+	Controls.Tab:SetHide(true)
 	if wasHidden and InStrategicView() then
 		ToggleStrategicView()
 	end
@@ -1263,8 +1252,7 @@ end);
 -------------------------------------------------
 function OnWorldCivsListClose()
 	Controls.WorldCivsList:SetHide(true)
-	Controls.PlayerInfoGrid:SetHide(false)
-	Controls.DiploPanelLeft:SetHide(false)
+	Controls.Tab:SetHide(false)
 	g_bWorldCivsAutoOpened = false
 end
 Controls.CloseButton:RegisterCallback( Mouse.eLClick, OnWorldCivsListClose );
