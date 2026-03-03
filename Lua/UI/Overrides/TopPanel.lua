@@ -871,7 +871,6 @@ local function VD_OnAction(playerID, turn, actionType, summary, rationale)
 	end
 
 	-- Switch panel on first rationale-bearing action (strategy/flavors/status-quo)
-	-- Camera already moved in VD_OnAIProcessingStarted, so skip it here
 	local ad = VD_Actions[playerID]
 	if not ad.switched
 		and (actionType == "strategy" or actionType == "flavors" or actionType == "status-quo") then
@@ -883,9 +882,7 @@ local function VD_OnAction(playerID, turn, actionType, summary, rationale)
 				Controls.WorldCivsList:SetHide(true)
 				g_bWorldCivsAutoOpened = false
 			end
-			g_bPlayerForViewLookup = false
 			OnCivPlayerSelected(playerID)
-			g_bPlayerForViewLookup = true
 		end
 	elseif playerID == g_iPlayerForView then
 		UpdateNewData(playerID)
@@ -976,6 +973,8 @@ local function VD_OnAIProcessingStarted(playerID)
 	if VD_Players[playerID] then
 		if g_bWorldCivsAutoOpened and not Controls.WorldCivsList:IsHidden() then
 			Controls.WorldCivsList:SetHide(true)
+			Controls.PlayerInfoGrid:SetHide(false)
+			Controls.DiploPanelLeft:SetHide(false)
 			g_bWorldCivsAutoOpened = false
 		end
 		if VD_CachedRationale[playerID] then
@@ -987,6 +986,8 @@ local function VD_OnAIProcessingStarted(playerID)
 	-- VPAI/unknown — switch panel immediately (camera already moved above)
 	if g_bWorldCivsAutoOpened and not Controls.WorldCivsList:IsHidden() then
 		Controls.WorldCivsList:SetHide(true)
+		Controls.PlayerInfoGrid:SetHide(false)
+		Controls.DiploPanelLeft:SetHide(false)
 		g_bWorldCivsAutoOpened = false
 	end
 	g_bPlayerForViewLookup = false
@@ -1117,6 +1118,8 @@ local g_PlayerListInstanceManager = InstanceManager:new( "PlayerEntryInstance", 
 function OnWorldCivsListUpdated()
 	local wasHidden = Controls.WorldCivsList:IsHidden()
 	Controls.WorldCivsList:SetHide(false)
+	Controls.PlayerInfoGrid:SetHide(true)
+	Controls.DiploPanelLeft:SetHide(true)
 	if wasHidden and InStrategicView() then
 		ToggleStrategicView()
 	end
@@ -1260,6 +1263,8 @@ end);
 -------------------------------------------------
 function OnWorldCivsListClose()
 	Controls.WorldCivsList:SetHide(true)
+	Controls.PlayerInfoGrid:SetHide(false)
+	Controls.DiploPanelLeft:SetHide(false)
 	g_bWorldCivsAutoOpened = false
 end
 Controls.CloseButton:RegisterCallback( Mouse.eLClick, OnWorldCivsListClose );

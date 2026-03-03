@@ -140,7 +140,7 @@
     <File md5="6D270B3848ACB913C36A6534392BA4BC" import="0">Lua/UI/Overrides/MiniMapPanel.xml</File>
     <File md5="C80B7BB2F60CA2FC37C2D389BF18B59D" import="1">Lua/UI/Overrides/NewTurn.lua</File>
     <File md5="17F59F6E9D3F22C3DCEE613F5F6FC60A" import="1">Lua/UI/Overrides/NewTurn.xml</File>
-    <File md5="922BC4CE4D12341D72E8E034D7C21E08" import="1">Lua/UI/Overrides/TopPanel.lua</File>
+    <File md5="89DEBED5CBF31B8C19114186B54010A9" import="1">Lua/UI/Overrides/TopPanel.lua</File>
     <File md5="40C5279BE427DE2B77BB0D156526B619" import="1">Lua/UI/Overrides/TopPanel.xml</File>
     <File md5="1ACD2840B8620EE3802C3A660BA23ED9" import="1">Lua/UI/Overrides/TopPanel_Back.lua</File>
     <File md5="4CB46E99A636514752F8322D4499F37E" import="0">Lua/UI/Overrides/TurnProcessing.lua</File>
